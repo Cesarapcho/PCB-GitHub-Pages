@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#101721" />
+  <title>PCB | Visor 3D interactivo</title>
+  <style>
+    :root{color-scheme:dark;--bg:#0b1018;--panel:#151d29;--border:#2b3747;--text:#ecf2f8;--muted:#9cadbe;--accent:#63e3c2}
+    *{box-sizing:border-box}html,body{margin:0;height:100%;font-family:Inter,ui-sans-serif,system-ui,Segoe UI,Arial,sans-serif;background:var(--bg);color:var(--text)}
+    .page{height:100dvh;min-height:420px;display:flex;flex-direction:column}.header{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:17px clamp(16px,4vw,42px);border-bottom:1px solid var(--border);background:#111923}.brand{display:flex;align-items:center;gap:12px}.logo{height:37px;width:37px;border:1px solid #337967;border-radius:10px;background:#12352e;display:grid;place-items:center;color:var(--accent);font-weight:800;letter-spacing:-1px}.name{font-weight:750;letter-spacing:-.03em}.sub{color:var(--muted);font-size:12px;margin-top:3px}.status{font-size:12px;color:var(--accent);display:flex;gap:7px;align-items:center}.dot{width:7px;height:7px;border-radius:50%;background:currentColor}
+    .workspace{flex:1;display:grid;grid-template-columns:minmax(0,1fr) 275px;min-height:0}.viewer{position:relative;min-width:0;min-height:0;overflow:hidden;background:radial-gradient(ellipse at 50% 45%,#1b2837 0,#0d141e 58%,#0b1018 100%)}canvas{display:block;width:100%;height:100%;outline:none}.hint{pointer-events:none;position:absolute;bottom:19px;left:22px;color:#96a7b9;font-size:12px;background:#111923aa;border:1px solid #344052;border-radius:9px;padding:9px 12px}.corner{pointer-events:none;position:absolute;top:22px;left:24px;color:#93a7ba;font-size:11px;letter-spacing:.16em;font-weight:650}.panel{background:var(--panel);border-left:1px solid var(--border);padding:24px 20px;overflow:auto}.eyebrow{font-size:11px;font-weight:750;letter-spacing:.14em;color:var(--accent);margin-bottom:10px}.panel h1{font-size:23px;letter-spacing:-.045em;margin:0 0 7px}.description{font-size:13px;line-height:1.6;color:var(--muted);margin:0 0 26px}.section{margin:24px 0 11px;font-size:11px;font-weight:750;letter-spacing:.12em;color:#8496aa}.controls{display:grid;gap:9px}.btn{font:inherit;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px 13px;width:100%;border-radius:9px;background:#202c3a;color:#dfe8f2;border:1px solid #354255;cursor:pointer;font-size:13px;text-align:left}.btn:hover{border-color:#58bca7;background:#263745}.btn.active{border-color:#4eaa98;background:#193e39;color:#a5f1db}.btn span:last-child{font-size:11px;color:#91a5b7}.divider{height:1px;background:var(--border);margin:24px 0}.detail{display:flex;justify-content:space-between;gap:10px;font-size:12px;margin:13px 0;color:var(--muted)}.detail strong{color:#e8eff7;font-weight:550}.footer{color:#6f8296;font-size:11px;line-height:1.6;margin-top:26px}.loading{position:absolute;inset:0;display:grid;place-items:center;background:#0d1520ee;z-index:3;transition:opacity .3s}.loading.hidden{opacity:0;pointer-events:none}.load-card{text-align:center;padding:25px;max-width:320px}.spinner{margin:0 auto 16px;width:32px;height:32px;border-radius:100%;border:3px solid #355044;border-top-color:var(--accent);animation:spin .8s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}.load-card p{font-size:13px;color:var(--muted);line-height:1.5}
+    @media(max-width:750px){.page{height:100dvh;min-height:600px}.header{padding:11px 16px}.workspace{grid-template-columns:1fr;grid-template-rows:minmax(320px,1fr) auto}.panel{border-left:0;border-top:1px solid var(--border);padding:15px 18px;max-height:42dvh}.panel h1{font-size:19px}.description{margin-bottom:12px}.controls{grid-template-columns:1fr 1fr}.section{margin-top:14px}.divider,.footer{display:none}.detail{display:inline-flex;margin:7px 16px 0 0}.hint{left:10px;bottom:10px;font-size:10px}.corner{top:12px;left:14px}}
+  </style>
+  <script type="importmap">
+  {"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"}}
+  </script>
+</head>
+<body>
+<div class="page">
+  <header class="header"><div class="brand"><div class="logo">3D</div><div><div class="name">PCB Explorer</div><div class="sub">Visor interactivo · Modelo CAD</div></div></div><div class="status"><i class="dot"></i><span id="status">Preparando modelo</span></div></header>
+  <div class="workspace">
+    <main class="viewer" id="viewer" aria-label="Vista 3D interactiva del PCB"><div class="corner">VISTA 3D · MODELO PCB</div><div class="hint">Arrastrar: rotar · Rueda: zoom · Clic derecho: desplazar</div><div class="loading" id="loading"><div class="load-card"><div class="spinner"></div><strong id="load-title">Cargando PCB…</strong><p id="load-message">Preparando el modelo tridimensional.</p></div></div></main>
+    <aside class="panel"><div class="eyebrow">MODELO INTERACTIVO</div><h1>Placa PCB</h1><p class="description">Explora el diseño tridimensional exportado desde EasyEDA Pro. Puedes girar, ampliar y examinar sus componentes.</p>
+      <div class="section">CONTROLES DE VISUALIZACIÓN</div><div class="controls"><button type="button" class="btn" id="reset">Restablecer vista <span>↺</span></button><button type="button" class="btn" id="rotate" aria-pressed="false">Rotación automática <span>○</span></button><button type="button" class="btn" id="wire" aria-pressed="false">Vista alámbrica <span>○</span></button><button type="button" class="btn" id="fit">Centrar modelo <span>⊞</span></button><button type="button" class="btn" id="fullscreen">Pantalla completa <span>⛶</span></button><button type="button" class="btn" id="capture">Guardar captura <span>↓</span></button></div>
+      <div class="divider"></div><div class="section">INFORMACIÓN</div><div class="detail">Formato web <strong>GLB (3D)</strong></div><div class="detail">Origen <strong>EasyEDA Pro / STEP</strong></div><div class="detail">Renderizado <strong>Three.js / WebGL</strong></div><p class="footer">El archivo STEP original se conserva por separado. Este visor utiliza una representación optimizada para el navegador.</p>
+    </aside>
+  </div>
+</div>
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+const viewer=document.getElementById('viewer');
+const scene=new THREE.Scene();
+const camera=new THREE.PerspectiveCamera(42,1,0.01,100000);
+const renderer=new THREE.WebGLRenderer({antialias:true,preserveDrawingBuffer:true,alpha:true});
+renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,2));renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.8;
+viewer.prepend(renderer.domElement);
+const controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.dampingFactor=.08;controls.minDistance=.01;controls.maxDistance=100000;
+scene.add(new THREE.HemisphereLight(0xf1f7ff,0x526278,3.2));
+const key=new THREE.DirectionalLight(0xffffff,3.4);key.position.set(30,40,60);scene.add(key);
+const fill=new THREE.DirectionalLight(0xa9e1ff,2.2);fill.position.set(-30,-20,-40);scene.add(fill);
+const back=new THREE.DirectionalLight(0xffffff,1.4);back.position.set(10,-40,35);scene.add(back);
+let model=null;let initialPosition=null;let initialTarget=null;let isWire=false;
+const loading=document.getElementById('loading'),status=document.getElementById('status');
+function resize(){const w=viewer.clientWidth,h=viewer.clientHeight;if(!w||!h)return;camera.aspect=w/h;camera.updateProjectionMatrix();renderer.setSize(w,h,false)}
+new ResizeObserver(resize).observe(viewer);resize();
+function fit(){if(!model)return;const box=new THREE.Box3().setFromObject(model);const center=box.getCenter(new THREE.Vector3());const size=box.getSize(new THREE.Vector3());const max=Math.max(size.x,size.y,size.z,1e-6);const distance=max/(2*Math.tan(THREE.MathUtils.degToRad(camera.fov/2)))*1.7;controls.target.copy(center);camera.position.copy(center).add(new THREE.Vector3(distance*.65,distance*.48,distance*.8));camera.near=Math.max(max/10000,.001);camera.far=Math.max(max*1000,distance*30);camera.updateProjectionMatrix();controls.minDistance=max*.08;controls.maxDistance=max*40;controls.update();initialPosition=camera.position.clone();initialTarget=center.clone()}
+const loader=new GLTFLoader();
+loader.load('./pcb.glb',gltf=>{model=gltf.scene;scene.add(model);fit();loading.classList.add('hidden');status.textContent='Modelo listo';setTimeout(()=>loading.remove(),400)},p=>{if(p.total>0)document.getElementById('load-message').textContent=`Descargando geometría: ${Math.round(p.loaded/p.total*100)} %`;},err=>{console.error(err);status.textContent='Error de carga';document.querySelector('.spinner').style.display='none';document.getElementById('load-title').textContent='No se pudo abrir el modelo';document.getElementById('load-message').textContent='Abre la página desde GitHub Pages o un servidor local. El visor no funciona abriendo index.html directamente con file://.'});
+function toggle(btn,active){btn.classList.toggle('active',active);btn.setAttribute('aria-pressed',String(active));btn.lastElementChild.textContent=active?'●':'○'}
+document.getElementById('rotate').onclick=e=>{controls.autoRotate=!controls.autoRotate;controls.autoRotateSpeed=1.8;toggle(e.currentTarget,controls.autoRotate)};
+document.getElementById('wire').onclick=e=>{isWire=!isWire;if(model)model.traverse(obj=>{if(obj.isMesh){const ms=Array.isArray(obj.material)?obj.material:[obj.material];ms.forEach(m=>{m.wireframe=isWire;m.needsUpdate=true})}});toggle(e.currentTarget,isWire)};
+document.getElementById('fit').onclick=fit;
+document.getElementById('reset').onclick=()=>{if(initialPosition){camera.position.copy(initialPosition);controls.target.copy(initialTarget);controls.update()}};
+document.getElementById('fullscreen').onclick=()=>{if(document.fullscreenElement)document.exitFullscreen();else viewer.requestFullscreen?.()};
+document.getElementById('capture').onclick=()=>{renderer.render(scene,camera);const a=document.createElement('a');a.download='PCB-vista-3D.png';a.href=renderer.domElement.toDataURL('image/png');a.click()};
+function animate(){requestAnimationFrame(animate);controls.update();renderer.render(scene,camera)}animate();
+</script>
+</body>
+</html>
